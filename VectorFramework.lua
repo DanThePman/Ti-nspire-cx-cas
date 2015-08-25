@@ -10,7 +10,7 @@ local connectVectors = false
 local checkedWelcome = false
 
 -------------------------------------------------------AnimationDrawing-------------------------------------------------------------------------
-local debug = true
+local debug = false
 local maxSlowDownSpeed = 0.3
 local letterIndex1 = 1
 local MAX_STEP = 70
@@ -23,10 +23,11 @@ local LETTER_COUNT = 22
 local w_MAX_STEP_FIRST = 190
 local w_MAX_STEP_SECOND = platform.window:width() + 20
 local accelerate = false
-local MAX_LETTER_DISTANCE_ACCELERATE = 10
+local MAX_LETTER_DISTANCE_ACCELERATE = 20
 local MAX_LETTER_DISTANCE_NO_ACCELERATE = MAX_LETTER_DISTANCE_ACCELERATE - 
                                                 w_letterIndexes[1] * MAX_LETTER_DISTANCE_ACCELERATE / w_MAX_STEP_FIRST
 local smoothOutDistance = 20
+local earlierAccelerationValue = 50 --at least
 
 
 local currentLetterIndex
@@ -58,7 +59,7 @@ else ---------------------------===DO WELCOME===
                         w_letterIndexes[currentIndexChanger] = w_letterIndexes[currentIndexChanger] + 3 - slowDownFactor
                         
                         if w_letterIndexes[currentIndexChanger] == w_letterIndexes[LETTER_COUNT] and w_letterIndexes[currentIndexChanger] >
-                                    w_MAX_STEP_FIRST - smoothOutDistance then
+                                    w_MAX_STEP_FIRST - earlierAccelerationValue then
                             accelerate = true
                         end
                     
@@ -75,6 +76,7 @@ else ---------------------------===DO WELCOME===
                     
                     w_letterIndexes[currentIndexChanger] = w_letterIndexes[currentIndexChanger] + 1 + (speedUpFactor)
                     if w_letterIndexes[currentIndexChanger] == w_letterIndexes[LETTER_COUNT] and w_letterIndexes[currentIndexChanger] > w_MAX_STEP_SECOND then
+                        timer.stop()
                         checkedWelcome = true
                     end  
                 
@@ -93,9 +95,11 @@ function DrawTextAnimation(gc)
     
     if letterIndex1 <= MAX_STEP then
         gc:setFont("serif","bi",12)
+        gc:setColorRGB(0, 102, 51)
         gc:drawString("Vektor regestriert!", 170 - letterIndex1 ,5,"top")
         timer.start(0.01)
     else
+        gc:setColorRGB(0,0,0)
         gc:setFont("serif","r",12)
         timer.stop()
         letterIndex1 = 1
@@ -141,8 +145,13 @@ end
 function on.paint(gc)
     
     if not checkedWelcome then
+        gc:setColorRGB(218,165,32)
+        gc:setFont("serif","bi",14)
         DoWelcome(gc)
         return
+    else
+        gc:setColorRGB(0,0,0)
+        gc:setFont("serif","r",12)
     end
     
     if drawVectors then
