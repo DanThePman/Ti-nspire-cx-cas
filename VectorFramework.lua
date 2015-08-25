@@ -156,16 +156,14 @@ function on.paint(gc)
     end
     
     if drawVectors then
-        for x=0,#output + #directionOutput,1 do --for each vec => better refresh
-            CheckStretchFactor()
-        end
+        CheckStretchFactor()
+        CheckStretchFactor() --refresh checking
         DrawOPVectors(gc)
     end
     
     if connectVectors then
-        for x=0,#output + #directionOutput,1 do --for each vec => better refresh
-            CheckStretchFactor()
-        end
+        CheckStretchFactor()
+        CheckStretchFactor() --refresh checking
         ConnectVectors(gc)
     end
 
@@ -429,7 +427,7 @@ elseif #biggestXVec > 0 and #biggestYVec > 0  then ---both contains smth
         finalBigVec[1] = biggestYVec[1]
         finalBigVec[2] = biggestYVec[2]
     end
-else --no overextending vectors cotnained
+elseif #biggestXVec == 0 and #biggestYVec == 0 and #output > 0 then --no overextending vectors cotnained
     ExtendStretchFactor()
 end
 
