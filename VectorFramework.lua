@@ -10,10 +10,10 @@ local connectVectors = false
 local checkedWelcome = false
 
 -------------------------------------------------------AnimationDrawing-------------------------------------------------------------------------
+local StdAccelerationValue_Register_Vector = 1
 local debug = false
-local maxSlowDownSpeed = 0.3
 local letterIndex1 = 1
-local MAX_STEP = 70
+local MAX_STEP = 100
 --
 
 --WELCOME
@@ -29,6 +29,9 @@ local MAX_LETTER_DISTANCE_NO_ACCELERATE = MAX_LETTER_DISTANCE_ACCELERATE -
 local smoothOutDistance = 20
 local earlierAccelerationValue = 50 --at least
 
+local StdAccelerationValue = 3 --at accelerate = false
+local accelerationValue = 15
+
 
 local currentLetterIndex
 --WELCOME
@@ -36,8 +39,8 @@ local currentLetterIndex
 function on.timer() --fires automatically
 
 if checkedWelcome then
-    slowDownFactor = (1 - maxSlowDownSpeed) / MAX_STEP
-    letterIndex1 = letterIndex1 + (1 - (letterIndex1 * slowDownFactor))
+    slowDownFactor = (StdAccelerationValue_Register_Vector - letterIndex1) / MAX_STEP --random ?!
+    letterIndex1 = letterIndex1 + (StdAccelerationValue_Register_Vector - (letterIndex1 * slowDownFactor))
     platform.window:invalidate()
 else ---------------------------===DO WELCOME===
     
@@ -56,7 +59,7 @@ else ---------------------------===DO WELCOME===
                                 slowDownFactor = slowDownFactor - 1
                            end
                     
-                        w_letterIndexes[currentIndexChanger] = w_letterIndexes[currentIndexChanger] + 3 - slowDownFactor
+                        w_letterIndexes[currentIndexChanger] = w_letterIndexes[currentIndexChanger] + StdAccelerationValue - slowDownFactor
                         
                         if w_letterIndexes[currentIndexChanger] == w_letterIndexes[LETTER_COUNT] and w_letterIndexes[currentIndexChanger] >
                                     w_MAX_STEP_FIRST - earlierAccelerationValue then
@@ -74,7 +77,7 @@ else ---------------------------===DO WELCOME===
                     
                     local speedUpFactor = w_letterIndexes[currentIndexChanger] * 0.01315789473
                     
-                    w_letterIndexes[currentIndexChanger] = w_letterIndexes[currentIndexChanger] + 1 + (speedUpFactor)
+                    w_letterIndexes[currentIndexChanger] = w_letterIndexes[currentIndexChanger] + accelerationValue + (speedUpFactor)
                     if w_letterIndexes[currentIndexChanger] == w_letterIndexes[LETTER_COUNT] and w_letterIndexes[currentIndexChanger] > w_MAX_STEP_SECOND then
                         timer.stop()
                         checkedWelcome = true
@@ -109,12 +112,6 @@ function DrawTextAnimation(gc)
 end --endfunc
 
 --===========================================WELCOME MSG=============================================================================================
-
-function resetIndexes() --not in use till now
-for indexer = 1, LETTER_COUNT, 1 do
-    w_letterIndexes[indexer] = 1
-end
-end
 
 function DoWelcome(gc)
 
@@ -432,6 +429,8 @@ elseif #biggestXVec > 0 and #biggestYVec > 0  then ---both contains smth
         finalBigVec[1] = biggestYVec[1]
         finalBigVec[2] = biggestYVec[2]
     end
+else --no overextending vectors cotnained
+    ExtendStretchFactor()
 end
 
 if #finalBigVec == 0 then return end --no overextending vectors
@@ -444,7 +443,91 @@ stretchFactor = screenHeight / finalBigVec[2] -----------------------NEW STRETCH
 end
 --check
 
+end --endfunc
+
+function ExtendStretchFactor() --increase factor instead of decreasing
+   
+screenWidth = platform.window:width()
+screenHeight = platform.window:height()
+
+--OP VECS INCREASE
+local vecX = null
+local biggestXVec = {}
+local biggestYVec = {}
+local finalBigVec = {}
+
+for _, _vec in ipairs(output) do
+    vec = tonumber(_vec)
+    if not vecX then vecX = vec else
+    
+        if #biggestXVec == 0 or biggestXVec[1] < vecX then
+            biggestXVec[1] = vecX
+            biggestXVec[2] = vec
+        end
+        
+        if #biggestYVec == 0 or biggestYVec[2] < vec then
+            biggestYVec[1] = vecX
+            biggestYVec[2] = vec
+        end        
+        
+        vecX = null
+    end
 end
+--OP VECS INCREASE
+
+--DIR VECS INCREASE
+
+if #directionOutput >= 2 then
+
+local correspondingIndexCount = 1
+for _, correspondingIndex in ipairs(directionOutputCorrespondingIndex) do
+    local realOpVecIndex = correspondingIndex * 2 - 1
+    local dirDirVecIndex = correspondingIndexCount * 2 - 1
+    
+        dirVecX = directionOutput[dirDirVecIndex] * stretchFactor
+        dirVecY = directionOutput[dirDirVecIndex + 1] * stretchFactor
+        opVecX = output[realOpVecIndex] * stretchFactor
+        opVecY = output[realOpVecIndex + 1] * stretchFactor
+        
+            if #biggestXVec == 0 or biggestXVec[1] < (opVecX / stretchFactor) + (dirVecX / stretchFactor) then
+                biggestXVec[1] = (opVecX / stretchFactor) + (dirVecX / stretchFactor)
+                biggestXVec[2] = (opVecY / stretchFactor) + (dirVecY / stretchFactor)
+            end           
+            if #biggestYVec == 0 or biggestYVec[2] < (opVecY / stretchFactor) + (dirVecY / stretchFactor) then
+                biggestXVec[1] = (opVecX / stretchFactor) + (dirVecX / stretchFactor)
+                biggestXVec[2] = (opVecY / stretchFactor) + (dirVecY / stretchFactor)
+            end
+    
+    correspondingIndexCount = correspondingIndexCount + 1
+end
+
+end
+
+--DIR VECS INCREASE
+
+local finalBigVec = { }
+
+--get highest value
+---both contains smth 100%
+    if  screenWidth / (biggestXVec[1] * stretchFactor) < screenWidth / (biggestYVec[2] * stretchFactor) then -- take lower scaling needed (percentage)
+        finalBigVec[1] = biggestXVec[1]
+        finalBigVec[2] = biggestXVec[2]
+    else ------------------------------------------------------------------overextending dist of Y_Vec higher
+        finalBigVec[1] = biggestYVec[1]
+        finalBigVec[2] = biggestYVec[2]
+    end
+
+if #finalBigVec == 0 then return end --no overextending vectors
+
+--check
+if finalBigVec[1] > finalBigVec[2] then --X biggest component
+stretchFactor = screenWidth / finalBigVec[1] -----------------------NEW STRETCH FACTOR
+else -------------------------------------Y biggest component
+stretchFactor = screenHeight / finalBigVec[2] -----------------------NEW STRETCH FACTOR
+end
+--check
+    
+end --endfunc
 
 -------------------------------------------------------DrawVecs-------------------------------------------------------------------------
 
