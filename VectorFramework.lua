@@ -143,6 +143,10 @@ end
 
  --====================================================PAINTING / MAIN FUNC=================================================================
 function on.paint(gc)
+
+    if string.len(input) > 0 then
+        PrintHelp(gc)
+    end
     
     if not checkedWelcome then
         gc:setColorRGB(218,165,32)
@@ -155,12 +159,16 @@ function on.paint(gc)
     end
     
     if drawVectors then
-        CheckStretchFactor()
+        for x=0,#output + #directionOutput,1 do --for each vec => better refresh
+            CheckStretchFactor()
+        end
         DrawOPVectors(gc)
     end
     
     if connectVectors then
-        CheckStretchFactor()
+        for x=0,#output + #directionOutput,1 do --for each vec => better refresh
+            CheckStretchFactor()
+        end
         ConnectVectors(gc)
     end
 
@@ -202,9 +210,13 @@ if input == "" then return end
 
 if input == "drw" then --draw Vecs
     drawVectors = true
+    input = ""
+    platform.window:invalidate()
     return
 elseif input == "cnt" then --connect
     connectVectors = true
+    input = ""
+    platform.window:invalidate()
     return
 else --add Vecs
     if string.match(input, "d") then --add directional Vec
@@ -226,6 +238,7 @@ else --add Vecs
     end
     
     input = ""
+    platform.window:invalidate()
     registeredVector = true
 end
 
@@ -304,6 +317,7 @@ gc:drawLine(xEnd, yEnd, xEnd + rotatedVecs[X], yEnd + rotatedVecs[Y])
 gc:drawLine(xEnd, yEnd, xEnd + rotatedVecs2[X], yEnd + rotatedVecs2[Y])
 gc:setColorRGB(0, 0, 0)
 
+platform.window:invalidate()
 
 end
 
@@ -463,8 +477,25 @@ for _, correspondingIndex in ipairs(directionOutputCorrespondingIndex) do
     correspondingIndexCount = correspondingIndexCount + 1
 end
 
+platform.window:invalidate()
 connectVectors = false
 
 end
 
 -------------------------------------------------------ConnectVecs-------------------------------------------------------------------------
+
+
+-------------------------------------------------------PrintHelp-------------------------------------------------------
+function PrintHelp(gc)
+
+gc:setColorRGB(0, 0, 0)
+gc:setFont("serif","r",6)
+
+gc:drawString("Hilfe: ", 5, platform.window:height() - 50, "bottom") 
+gc:drawString("Vektor hinzufügen                     : <X>,<Y>", 5, platform.window:height() - 40, "bottom") 
+gc:drawString("Ritchtungsvektor hinzufügen      : d,<Stützvektor nummer>,<X>,<Y>", 5, platform.window:height() - 30, "bottom") 
+gc:drawString("Vektoren zeichnen lassen          : drw", 5, platform.window:height() - 20, "bottom") 
+gc:drawString("Resultierende Vektoren zeichnen: cnt", 5, platform.window:height() - 10, "bottom") 
+
+end
+-------------------------------------------------------PrintHelp-------------------------------------------------------
