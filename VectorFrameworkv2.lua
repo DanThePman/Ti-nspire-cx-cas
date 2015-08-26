@@ -160,6 +160,7 @@ end
  --====================================================PAINTING / MAIN FUNC=================================================================
   --====================================================PAINTING / MAIN FUNC=================================================================
  --====================================================PAINTING / MAIN FUNC=================================================================
+ 
 function on.paint(gc)
 
     if not checkedWelcome then --welcome msg loading
@@ -171,6 +172,14 @@ function on.paint(gc)
         gc:setColorRGB(0,0,0)
         gc:setFont("serif","r",12)
     end
+    
+    
+    if stretchFactor and not clickedInCircle then
+         gc:setFont("serif","r",6)
+         gc:drawString("Scaling: "..tostring(stretchFactor),190,5,"top")
+         gc:setFont("serif","r",12)
+    end
+    
     
     if string.len(input) > 0 and not clickedInCircle then --printing help
         PrintHelp(gc)
