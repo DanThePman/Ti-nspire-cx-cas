@@ -199,7 +199,7 @@ function on.paint(gc)
         DrawOptionsMenuAfterClick(gc)
     end
     
-    if drawCircle and not clickedInCircle then --draw circle true
+    if drawCircle and not clickedInCircle and string.len(input) == 0 then --draw circle true
         platform.window:invalidate()
         gc:setPen("thin","dotted")
         gc:setColorRGB(139,0,139) --magenta circle drawing
@@ -233,7 +233,7 @@ end
 
 -------------------------------------------------------CHAR_IN_KEY-------------------------------------------------------------------------
 function on.charIn(char)
-    if string.len(input) <= 25 and checkedWelcome then
+    if string.len(input) <= 25 and checkedWelcome and not drawVectors then
         input = input..char
         platform.window:invalidate()
     end
