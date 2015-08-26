@@ -199,10 +199,12 @@ function on.paint(gc)
         DrawOptionsMenuAfterClick(gc)
     end
     
-    if drawCircle then --draw circle true
+    if drawCircle and not clickedInCircle then --draw circle true
         platform.window:invalidate()
         gc:setPen("thin","dotted")
+        gc:setColorRGB(139,0,139) --magenta circle drawing
         gc:drawArc(nearestVec[1] - circleRadius / 2, nearestVec[2] - circleRadius / 2, circleRadius, circleRadius, 0, 360) --draws a circle at vec point
+         gc:setColorRGB(0,0,0)
         gc:setPen("thin","smooth")
     end
     
