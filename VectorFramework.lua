@@ -16,7 +16,7 @@ local letterIndex1 = 1
 local MAX_STEP = 100
 --
 
---WELCOME
+--WELCOME---------------------------------------------------------------------------------------------------------------------------------
 local w_letterIndexes  = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
 local w_letters ={ "D", "A", "N", "I", "E", "L", "S",      "V", "E", "K", "T", "O", "R",        "F", "R", "A", "M", "E", "W", "O", "R", "K" }
 local LETTER_COUNT = 22
@@ -34,7 +34,24 @@ local accelerationValue = 15
 
 
 local currentLetterIndex
---WELCOME
+--WELCOME-------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--DrawVecs
+local stretchFactor = 10
+--DrawVecs
+
+--Mouse
+
+local drawCircle = false
+local nearestVec = { } --includes stretchFactor
+local circleRadius = 25
+
+--Mouse22222
+
+local clickedInCircle = false
+
+--Mouse
 
 function on.timer() --fires automatically
 
@@ -139,13 +156,11 @@ end
 -------------------------------------------------------AnimationDrawing-------------------------------------------------------------------------
 
  --====================================================PAINTING / MAIN FUNC=================================================================
+  --====================================================PAINTING / MAIN FUNC=================================================================
+ --====================================================PAINTING / MAIN FUNC=================================================================
 function on.paint(gc)
 
-    if string.len(input) > 0 then
-        PrintHelp(gc)
-    end
-    
-    if not checkedWelcome then
+    if not checkedWelcome then --welcome msg loading
         gc:setColorRGB(218,165,32)
         gc:setFont("serif","bi",14)
         DoWelcome(gc)
@@ -155,13 +170,28 @@ function on.paint(gc)
         gc:setFont("serif","r",12)
     end
     
-    if drawVectors then
+    if string.len(input) > 0 then --printing help
+        PrintHelp(gc)
+    end
+    
+    if clickedInCircle then --clicked in circle true
+        platform.window:invalidate()
+        DrawOptionsMenuAfterClick(gc)
+    end
+    
+    if drawCircle then --draw circle true
+        gc:setPen("thin","dotted")
+        gc:drawArc(nearestVec[1] - circleRadius / 2, nearestVec[2] - circleRadius / 2, circleRadius, circleRadius, 0, 360) --draws a circle at vec point
+        gc:setPen("thin","smooth")
+    end
+    
+    if drawVectors then --drw input
         CheckStretchFactor()
         CheckStretchFactor() --refresh checking
         DrawOPVectors(gc)
     end
     
-    if connectVectors then
+    if connectVectors then --cnt input
         CheckStretchFactor()
         CheckStretchFactor() --refresh checking
         ConnectVectors(gc)
@@ -174,6 +204,8 @@ function on.paint(gc)
     end
 end
 --====================================================PAINTING / MAIN FUNC=================================================================
+ --====================================================PAINTING / MAIN FUNC=================================================================
+  --====================================================PAINTING / MAIN FUNC=================================================================
 
 
 -------------------------------------------------------CHAR_IN_KEY-------------------------------------------------------------------------
@@ -245,7 +277,6 @@ local screenHeight = platform.window:height()
 
 
 -------------------------------------------------------DrawVecs-------------------------------------------------------------------------
-local stretchFactor = 10
 
 function RotateVecStd(x, y, angle)
 
@@ -578,5 +609,140 @@ gc:drawString("Ritchtungsvektor hinzufügen      : d,<Stützvektor nummer>,<X>,<
 gc:drawString("Vektoren zeichnen lassen          : drw", 5, platform.window:height() - 20, "bottom") 
 gc:drawString("Resultierende Vektoren zeichnen: cnt", 5, platform.window:height() - 10, "bottom") 
 
+gc:setFont("serif","r",12)
+
 end
 -------------------------------------------------------PrintHelp-------------------------------------------------------
+
+
+
+
+
+
+
+
+--======================================================Mouse Managing======================================================--
+
+function on.mouseMove(x,y)
+    if not checkedWelcome then return end
+    
+    GetNearestVector(x,y)
+
+end
+
+function GetDistance(x1, y1, x2, y2)
+
+    local resultingX = x2 - x1
+    local resultingY = y2 - y1
+    
+    return GetVecLenght(resultingX, resultingY)
+
+end
+
+
+
+
+function GetNearestVector(mouseX, mouseY)
+
+nearestVec = {}
+
+X = 1
+Y = 2
+
+--OP VECS
+local vecX = null
+
+for _, _vec in ipairs(output) do
+    vec = tonumber(_vec)
+    if not vecX then vecX = vec else
+        vecX = vecX * stretchFactor
+        vec = vec * stretchFactor
+        
+        local currDistToMouse = GetDistance(mouseX, mouseY, vecX, vec) --vec = Y component
+        
+        if #nearestVec == 0 or GetDistance(nearestVec[X], nearestVec[Y], mouseX, mouseY) > currDistToMouse then
+            nearestVec[X] = vecX
+            nearestVec[Y] = vec
+        end
+        
+        vecX = null
+    end
+end
+
+
+
+--DIR VECS
+
+if #directionOutput >= 2 then
+
+    local correspondingIndexCount = 1
+    for _, correspondingIndex in ipairs(directionOutputCorrespondingIndex) do
+        local realOpVecIndex = correspondingIndex * 2 - 1
+        local dirDirVecIndex = correspondingIndexCount * 2 - 1
+        
+            dirVecX = directionOutput[dirDirVecIndex] * stretchFactor
+            dirVecY = directionOutput[dirDirVecIndex + 1] * stretchFactor
+            opVecX = output[realOpVecIndex] * stretchFactor
+            opVecY = output[realOpVecIndex + 1] * stretchFactor
+            
+            local currDistToMouse_DirVec = GetDistance(mouseX, mouseY, opVecX + dirVecX, opVecY + dirVecY) --vec = Y component
+            
+            if #nearestVec == 0 or GetDistance(nearestVec[X], nearestVec[Y], mouseX, mouseY) > currDistToMouse_DirVec then
+                nearestVec[X] = opVecX + dirVecX
+                nearestVec[Y] = opVecY + dirVecY
+            end
+        
+        correspondingIndexCount = correspondingIndexCount + 1
+    end
+
+end
+
+
+-------------check near
+
+if #nearestVec > 0 and GetDistance(nearestVec[X], nearestVec[Y], mouseX, mouseY) <= circleRadius then --draw circle
+    drawCircle = true
+else
+    drawCircle = false
+end
+
+-------------check near
+
+end --endfunc
+
+--======================================================Mouse Managing 222222222================================================--
+
+function on.mouseDown(x,y)
+
+if not drawCircle then return end
+
+if GetDistance(x, y, nearestVec[1], nearestVec[2]) <= circleRadius then
+    clickedInCircle = true
+end
+
+end --endfunc
+
+function DrawOptionsMenuAfterClick(gc)
+
+local yStep = 30
+local rectWidth = 20
+local rectHeight = 20
+
+gc:setColorRGB(0, 0, 0)
+gc:setFont("serif","bi",10)
+
+gc:drawString("Länge ", 5, yStep, "bottom")
+gc:drawRect(170 - rectWidth / 2, yStep - rectHeight / 2, rectWidth, rectHeight)
+gc:drawString("Winkel zur X-Achse", 5, yStep*2, "bottom") 
+gc:drawRect(170 - rectWidth / 2, yStep*2 - rectHeight / 2, rectWidth, rectHeight)
+gc:drawString("Interagieren mit..", 5, yStep*3, "bottom")
+gc:drawRect(170 - rectWidth / 2, yStep*3 - rectHeight / 2, rectWidth, rectHeight)
+
+gc:setFont("serif","r",12)
+
+end
+
+--======================================================Mouse Managing======================================================--
+
+
+
