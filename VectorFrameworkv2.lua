@@ -51,7 +51,11 @@ local circleRadius = 25
 
 local clickedInCircle = false
 local showedPrintings = false
+
 local interactAfterClickInCircle = false
+    local baseInteractingVec = {}
+    local _interactingVec = {}
+local gotInteractingVec = false
 
 --Mouse
 
@@ -173,15 +177,28 @@ function on.paint(gc)
         gc:setFont("serif","r",12)
     end
     
+    --start here
     
-    if stretchFactor and not clickedInCircle then
+    if interactAfterClickInCircle and not gotInteractingVec then
+        platform.window:invalidate()
+        input = ""
+        WaitForInteractingVec(gc)
+    elseif interactAfterClickInCircle and gotInteractingVec then
+        platform.window:invalidate()
+        input = ""
+        PrintInteractingResult(gc)
+        return --pretend more drawings
+    end
+    
+    
+    if stretchFactor and not clickedInCircle and not interactAfterClickInCircle then --draw stretchFactor
          gc:setFont("serif","r",6)
          gc:drawString("Scaling: "..tostring(stretchFactor),190,5,"top")
          gc:setFont("serif","r",12)
     end
     
     
-    if string.len(input) > 0 and not clickedInCircle then --printing help
+    if string.len(input) > 0 and not clickedInCircle and not interactAfterClickInCircle then --printing help
         PrintHelp(gc)
     end
     
@@ -195,12 +212,14 @@ function on.paint(gc)
             ShowVectorAngleToAxis(gc)
         elseif input == "c" then
             interactAfterClickInCircle = true
+            baseInteractingVec[1] = nearestVec[1]
+            baseInteractingVec[2] = nearestVec[2]
         elseif input == "" then
             showPrinting = false
         end
         
         input = ""
-    elseif clickedInCircle and not showedPrintings then --clicked in circle true
+    elseif clickedInCircle and not showedPrintings and not interactAfterClickInCircle then --clicked in circle true
         platform.window:invalidate()
         gc:setFont("serif","b",10)
         gc:drawString(input,190,40,"top")
@@ -265,7 +284,7 @@ end
 -------------------------------------------------------RETURN_KEY-------------------------------------------------------------------------
 function on.enterKey()
 
-if showedPrintings and clickedInCircle then
+if showedPrintings and clickedInCircle and not interactAfterClickInCircle then
     platform.window:invalidate()
     drawVectors = true
     input = ""
@@ -277,6 +296,20 @@ if showedPrintings and clickedInCircle then
 elseif clickedInCircle and not showedPrintings then
         platform.window:invalidate()
         showedPrintings = true
+end
+
+if interactAfterClickInCircle and gotInteractingVec then
+    platform.window:invalidate()
+    drawVectors = true
+    input = ""
+    
+    --RESET
+        gotInteractingVec = false
+        interactAfterClickInCircle = false
+        _interactingVec = {}
+        baseInteractingVec = {}
+        --showedPrintings and clickedInCircle already reseted after getting interacting vec
+    --RESET
 end
 
 ----------------------------------------normal vector input
@@ -671,7 +704,7 @@ end
 --======================================================Mouse Managing======================================================--
 
 function on.mouseMove(x,y)
-    if not checkedWelcome or clickedInCircle then return end
+    if not checkedWelcome or clickedInCircle or #_interactingVec > 0 then return end
     
     platform.window:invalidate()
     if #output > 0 then
@@ -770,9 +803,16 @@ GetNearestVector(x,y)
 if not drawCircle then return end
 
 if GetDistance(x, y, nearestVec[1], nearestVec[2]) <= circleRadius then
-    clickedInCircle = true
-    platform.window:invalidate()
-    input = ""
+
+    if not interactAfterClickInCircle then --first click before interacting
+        clickedInCircle = true
+        platform.window:invalidate()
+        input = ""
+    elseif #_interactingVec == 0 then --interacting click
+        _interactingVec[1] = nearestVec[1]
+        _interactingVec[2] = nearestVec[2]
+        gotInteractingVec = true
+    end
 end
 
 end --endfunc
@@ -838,6 +878,42 @@ local angleBetween = AngleBetweenVecs(nearestVec[1], nearestVec[2], X_Axis_Vec[1
 gc:setFont("serif","bi",12)
 gc:drawString("Winkel: "..tostring(angleBetween).."°", 5, 15, "top")
 gc:setFont("serif","bi",12)
+
+end
+
+--======================================================Interacting Vec======================================================--
+
+function WaitForInteractingVec(gc)
+
+    gc:setFont("serif","bi",12)
+    gc:setColorRGB(218,165,32)
+    gc:drawString("Warte auf Vektor..", 170 ,5,"top")
+    gc:setFont("serif","r",12)
+    gc:setColorRGB(0, 0, 0)
+    
+    CheckStretchFactor()
+    CheckStretchFactor() --refresh checking
+    DrawOPVectors(gc)
+    
+    showedPrintings = false
+    clickedInCircle = false
+end
+
+function PrintInteractingResult(gc)
+
+X = 1
+Y = 2
+
+local baseVec = { baseInteractingVec[X] / stretchFactor, baseInteractingVec[Y] / stretchFactor }
+local interactingVec = { _interactingVec[X] / stretchFactor, _interactingVec[Y] / stretchFactor }
+
+local angleBetween = AngleBetweenVecs(baseVec[X], baseVec[Y], nearestVec[X], nearestVec[Y])
+
+gc:setFont("serif","bi",12)
+gc:setColorRGB(218,165,32)
+gc:drawString("Winkel zwischen ("..baseVec[X].."|"..baseVec[Y]..") und ("..interactingVec[X].."|"..interactingVec[Y]..")\n=> "..angleBetween.."°" , 5 ,5,"top")
+gc:setFont("serif","r",12)
+gc:setColorRGB(0, 0, 0)
 
 end
 
