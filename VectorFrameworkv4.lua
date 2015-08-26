@@ -996,8 +996,17 @@ if __baseVec and __interactingVec then --both vectors are resulting vecs of op +
                                                                         __interactingVec[1] / stretchFactor.."|"..__interactingVec[2] / stretchFactor..") + "..l.." * "..
                                                                         "("..__interactingVec[3] / stretchFactor.."|"..__interactingVec[4] / stretchFactor..")",
                                                                              5 ,40+35*2,"top")
-    else --dir vecs will never face each other
+    else --dir vecs will possibly never face each other
         gc:drawString("Richtungsvektoren sind kollinear", 5 ,40+35*2,"top")
+        
+        --check if facing
+        
+        local kForX = ((__interactingVec[1] / stretchFactor) - (__baseVec[1] / stretchFactor)) / (__baseVec[3] / stretchFactor)
+        local kForY = ((__interactingVec[2] / stretchFactor) - (__baseVec[2] / stretchFactor)) / (__baseVec[4] / stretchFactor)
+        
+        if kForX == kForY then --they face
+            gc:drawString("Punktprobe positiv", 5 ,40+35*3,"top")
+        end
     end
 else
     --not 2 dir vecs included
