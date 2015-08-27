@@ -501,7 +501,7 @@ for _, correspondingIndex in ipairs(directionOutputCorrespondingIndex) do
         opVecX = output[realOpVecIndex] * stretchFactor
         opVecY = output[realOpVecIndex + 1] * stretchFactor
         
-        if opVecX + dirVecX > screenWidth or opVecY + dirVecY > screenWidth then ------------------ > overextending op + dir
+        if opVecX + dirVecX > screenWidth or opVecY + dirVecY > screenHeight then ------------------ > overextending op + dir
                 if #biggestXVec == 0 or biggestXVec[1] < (opVecX / stretchFactor) + (dirVecX / stretchFactor) then
                     biggestXVec[1] = (opVecX / stretchFactor) + (dirVecX / stretchFactor)
                     biggestXVec[2] = (opVecY / stretchFactor) + (dirVecY / stretchFactor)
