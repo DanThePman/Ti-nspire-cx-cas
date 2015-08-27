@@ -179,11 +179,7 @@ function on.paint(gc)
     
     --start here
     
-    if interactAfterClickInCircle and not gotInteractingVec then
-        platform.window:invalidate()
-        input = ""
-        WaitForInteractingVec(gc)
-    elseif interactAfterClickInCircle and gotInteractingVec then
+    if interactAfterClickInCircle and gotInteractingVec then --interactAfterClickInCircle: click circle -> type c as input => press enter
         platform.window:invalidate()
         input = ""
         PrintInteractingResult(gc)
@@ -211,9 +207,15 @@ function on.paint(gc)
         elseif input == "b" then
             ShowVectorAngleToAxis(gc)
         elseif input == "c" then
+            CheckStretchFactor()
+            CheckStretchFactor() --refresh checking
+            DrawOPVectors(gc)
+            
             interactAfterClickInCircle = true
             baseInteractingVec[1] = nearestVec[1]
             baseInteractingVec[2] = nearestVec[2]
+            
+            WaitForInteractingVec(gc)
         elseif input == "" then
             showPrinting = false
         end
@@ -813,6 +815,7 @@ if GetDistance(x, y, nearestVec[1], nearestVec[2]) <= circleRadius then
         _interactingVec[1] = nearestVec[1]
         _interactingVec[2] = nearestVec[2]
         gotInteractingVec = true
+        platform.window:invalidate()
     end
 end
 
@@ -892,10 +895,6 @@ function WaitForInteractingVec(gc)
     gc:setFont("serif","r",12)
     gc:setColorRGB(0, 0, 0)
     
-    CheckStretchFactor()
-    CheckStretchFactor() --refresh checking
-    DrawOPVectors(gc)
-    
     showedPrintings = false
     clickedInCircle = false
 end
@@ -936,11 +935,10 @@ end --endfunc
 
 function VecsAreCollinear(x, y, x2, y2)
 
-if AngleBetweenVecs(x, y, x2, y2) == 0 or AngleBetweenVecs(x, y, x2, y2) == 180 then
-    return true
-else
-    return false
-end
+local multiplyFactor_ForX  = x2 / x 
+local multiplyFactor_ForY = y2 / y
+
+return multiplyFactor_ForX == multiplyFactor_ForY
 
 end
 
@@ -963,7 +961,8 @@ local angleBetween = AngleBetweenVecs(baseVec[X], baseVec[Y], nearestVec[X], nea
 gc:setFont("serif","bi",12)
 gc:drawString("Richtungsvekt. werden zusammengefasst!", 5, 5, "top")
 gc:setColorRGB(218,165,32)
-gc:drawString("Winkel zwischen ("..baseVec[X].."|"..baseVec[Y]..") und ("..interactingVec[X].."|"..interactingVec[Y]..")\n=> "..angleBetween.."°" , 5 ,5+35,"top")
+gc:drawString("Winkel zwischen ("..baseVec[X].."|"..baseVec[Y]..") und ("..interactingVec[X].."|"..interactingVec[Y]..")" , 5 ,5+35,"top")
+gc:drawString("=> "..angleBetween.."°", 5, 5+35+15, "top")
 
 local vectorProduct_2D_X = baseVec[Y] * interactingVec[Z] - interactingVec[Y] * baseVec[Z]
 local vectorProduct_2D_Y = baseVec[Z] * interactingVec[X] - interactingVec[Z] * baseVec[X]
@@ -971,7 +970,8 @@ local vectorProduct_2D_Z = baseVec[X] * interactingVec[Y] - interactingVec[X] * 
 
 local resultingA = math.sqrt(vectorProduct_2D_X*vectorProduct_2D_X + vectorProduct_2D_Y*vectorProduct_2D_Y + vectorProduct_2D_Z*vectorProduct_2D_Z)
 
-gc:drawString("Fläche (Parallelogramm)\n=> "..resultingA , 5 ,40+35,"top")
+gc:drawString("Fläche (Parallelogramm)", 5 ,40+35,"top")
+gc:drawString("=> "..resultingA , 5, 40+35+15, "top")
 
 -------------------------------------------------------checking if OP + Dir Vec
 
@@ -991,11 +991,10 @@ if __baseVec and __interactingVec then --both vectors are resulting vecs of op +
             (__interactingVec[3] * __baseVec[4] - __interactingVec[4] * __baseVec[3])
             
             gc:drawString("Veks treffen sich bei:\n("..__baseVec[1] / stretchFactor.."|"..__baseVec[2] / stretchFactor..") + "..k.." * ("..
-                                                                        __baseVec[3] / stretchFactor.."|"..__baseVec[4] / stretchFactor..")\n("..
-                                                                        
-                                                                        __interactingVec[1] / stretchFactor.."|"..__interactingVec[2] / stretchFactor..") + "..l.." * "..
+                                                                        __baseVec[3] / stretchFactor.."|"..__baseVec[4] / stretchFactor..")",5 ,40+35*2,"top")
+            gc:drawString("("..__interactingVec[1] / stretchFactor.."|"..__interactingVec[2] / stretchFactor..") + "..l.." * "..
                                                                         "("..__interactingVec[3] / stretchFactor.."|"..__interactingVec[4] / stretchFactor..")",
-                                                                             5 ,40+35*2,"top")
+                                                                             5 ,40+35*2+45,"top")
     else --dir vecs will possibly never face each other
         gc:drawString("Richtungsvektoren sind kollinear", 5 ,40+35*2,"top")
         
